@@ -1,0 +1,52 @@
+# Secrets and local environments
+.env
+.env.*
+!.env.example
+.venv/
+
+# Python caches and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Jupyter/local notebook caches
+.ipynb_checkpoints/
+
+# OS and editor files
+.DS_Store
+._*
+__MACOSX/
+.Spotlight-V100/
+.Trashes/
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Streamlit local secrets
+.streamlit/secrets.toml
+
+# Generated runtime state
+runtime/chroma/
+runtime/chroma_online_smoke/
+runtime/traces/
+runtime/support_tickets.sqlite
+runtime/**/*.sqlite-shm
+runtime/**/*.sqlite-wal
