@@ -123,6 +123,23 @@ class RagIndex:
             for index, score in ranked
         ]
 
+    def find_by_sources(self, sources: Sequence[str]) -> List[RagChunk]:
+        if not self._chunks:
+            self.load_or_ingest()
+        wanted = set(sources)
+        return [
+            RagChunk(
+                document_id=chunk.document_id,
+                chunk_id=chunk.chunk_id,
+                source=chunk.source,
+                title=chunk.title,
+                text=chunk.text,
+                score=1.0,
+            )
+            for chunk in self._chunks
+            if chunk.source in wanted
+        ]
+
     def _boost_score(self, score: float, query: str, chunk: RagChunk) -> float:
         q = query.lower().replace("ё", "е")
         body = f"{chunk.document_id} {chunk.title} {chunk.text}".lower().replace("ё", "е")
