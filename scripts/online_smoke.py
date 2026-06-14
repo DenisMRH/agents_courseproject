@@ -13,8 +13,12 @@ from src.llm import GigaChatClient
 from src.rag import RagIndex
 
 
+def yes_no(value: bool) -> str:
+    return "да" if value else "нет"
+
+
 def fail(message: str) -> None:
-    raise SystemExit(f"online_smoke_failed={message}")
+    raise SystemExit(f"ошибка_онлайн_проверки={message}")
 
 
 def retry(label: str, func, attempts: int = 3):
@@ -25,7 +29,7 @@ def retry(label: str, func, attempts: int = 3):
         except Exception as exc:  # pragma: no cover - diagnostic script
             last_exc = exc
             if attempt < attempts:
-                print(f"{label}_retry={attempt}; error={type(exc).__name__}: {exc}")
+                print(f"{label}_повтор={attempt}; ошибка={type(exc).__name__}: {exc}")
                 time.sleep(2 * attempt)
     assert last_exc is not None
     fail(f"{type(last_exc).__name__}: {last_exc}")
@@ -33,30 +37,30 @@ def retry(label: str, func, attempts: int = 3):
 
 def main() -> None:
     config = AgentConfig.from_env()
-    print(f"use_gigachat={config.use_gigachat}")
-    print(f"has_credentials={bool(config.gigachat_credentials)}")
+    print(f"используется_gigachat={yes_no(config.use_gigachat)}")
+    print(f"учётные_данные_найдены={yes_no(bool(config.gigachat_credentials))}")
 
     llm = GigaChatClient(config)
-    print(f"chat_available={llm.available}")
+    print(f"чат_доступен={yes_no(llm.available)}")
     if not llm.available:
-        fail("chat_unavailable")
+        fail("чат_недоступен")
 
     response = llm.invoke("Ответь одним словом: проверка")
-    print(f"chat_response_present={bool(response)}")
+    print(f"ответ_чата_получен={yes_no(bool(response))}")
     if not response:
-        fail("empty_chat_response")
+        fail("пустой_ответ_чата")
     if response:
-        print("chat_response_preview=" + response[:120].replace("\n", " "))
+        print("предпросмотр_ответа_чата=" + response[:120].replace("\n", " "))
 
     rag = RagIndex(config)
     embedding_function = rag._gigachat_embedding_function()
-    print(f"embedding_function={bool(embedding_function)}")
+    print(f"функция_эмбеддингов={yes_no(bool(embedding_function))}")
     if not embedding_function:
-        fail("embedding_function_unavailable")
+        fail("функция_эмбеддингов_недоступна")
 
     def check_embeddings_and_chroma() -> None:
         vector = embedding_function(["Синтетическая проверка без клиентских и проектных данных."])[0]
-        print(f"embedding_len={len(vector)}")
+        print(f"размерность_эмбеддинга={len(vector)}")
 
         import chromadb  # type: ignore
 
@@ -65,9 +69,9 @@ def main() -> None:
         doc_id = "smoke-" + uuid4().hex[:8]
         collection.add(ids=[doc_id], documents=["Синтетический тест без данных клиента."])
         result = collection.query(query_texts=["синтетический тест"], n_results=1)
-        print("chroma_query_ids=" + ",".join(result["ids"][0]))
+        print("идентификаторы_запроса_chroma=" + ",".join(result["ids"][0]))
 
-    retry("embedding_chroma", check_embeddings_and_chroma)
+    retry("эмбеддинги_chroma", check_embeddings_and_chroma)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,12 @@
 .env
 .env.*
 !.env.example
+.envrc
+.direnv/
 .venv/
+venv/
+env/
+ENV/
 
 # Python caches and build artifacts
 __pycache__/
@@ -11,6 +16,11 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
+.cache/
 .coverage
 coverage.xml
 htmlcov/
@@ -21,16 +31,35 @@ dist/
 # Jupyter/local notebook caches
 .ipynb_checkpoints/
 
+# Local task/context notes and raw Telegram attachments
+project_context.md
+project_context_full.md
+telegram_project_files/
+
 # OS and editor files
 .DS_Store
 ._*
 __MACOSX/
+.AppleDouble
+.LSOverride
 .Spotlight-V100/
 .Trashes/
+.fseventsd/
+.TemporaryItems/
+.DocumentRevisions-V100/
+.VolumeIcon.icns
 Thumbs.db
+ehthumbs.db
 desktop.ini
+$RECYCLE.BIN/
 .idea/
 .vscode/
+.cursor/
+.fleet/
+.zed/
+.history/
+*.sublime-project
+*.sublime-workspace
 *.swp
 *.swo
 *~
@@ -39,14 +68,18 @@ desktop.ini
 *.log
 *.tmp
 *.temp
+*.bak
+*.orig
+*.rej
+*.pid
+tmp/
+temp/
 
 # Streamlit local secrets
 .streamlit/secrets.toml
 
 # Generated runtime state
-runtime/chroma/
-runtime/chroma_online_smoke/
-runtime/traces/
-runtime/support_tickets.sqlite
+runtime/
 runtime/**/*.sqlite-shm
 runtime/**/*.sqlite-wal
+runtime/**/*.sqlite-journal

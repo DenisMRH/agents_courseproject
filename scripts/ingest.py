@@ -16,13 +16,13 @@ def main() -> None:
     chunks = index.ingest(force=True)
     documents = sorted({chunk.document_id for chunk in chunks})
     missing_meta = [chunk.chunk_id for chunk in chunks if not (chunk.document_id and chunk.chunk_id and chunk.source)]
-    print(f"Indexed documents: {len(documents)}")
-    print(f"Indexed chunks: {len(chunks)}")
-    print("Documents: " + ", ".join(documents))
+    print(f"Проиндексировано документов: {len(documents)}")
+    print(f"Проиндексировано фрагментов: {len(chunks)}")
+    print("Документы: " + ", ".join(documents))
     if missing_meta:
-        raise SystemExit(f"Chunks without required metadata: {missing_meta[:5]}")
+        raise SystemExit(f"Фрагменты без обязательных метаданных: {missing_meta[:5]}")
     if len(documents) != 5:
-        raise SystemExit(f"Expected 5 documents, got {len(documents)}")
+        raise SystemExit(f"Ожидалось 5 документов, получено: {len(documents)}")
 
 
 if __name__ == "__main__":

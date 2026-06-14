@@ -1,33 +1,33 @@
-# MSB lending support agent
+# Агент поддержки кредитования МСБ
 
-Prototype support agent for the training case `Проект поддержки кредитования МСБ`.
+Прототип агента поддержки для учебного кейса `Проект поддержки кредитования МСБ`.
 
-## What is implemented
+## Что реализовано
 
-- LangGraph workflow: intent classification, safety check, RAG/tools, escalation gate, final self-check; sequential fallback is kept for environments without LangGraph.
-- RAG over the 5 markdown regulations from `project_support_lending_msb_clean/Проект поддержки кредитования МСБ/data/documents`.
-- SQLite tools over `clients.sqlite` in read-only mode: client profile, applications, loans and combined context.
-- Escalation tickets in `runtime/support_tickets.sqlite`.
-- Trace logs with RAG chunks and tool calls in `runtime/traces`.
-- Streamlit demo UI in `app/streamlit_app.py`.
-- E2E evaluation over `data/qa/qa.jsonl` with a generated report in `reports/eval_report.md`.
+- Граф обработки на LangGraph: классификация намерения, проверка безопасности, RAG/инструменты, шлюз эскалации, финальная самопроверка; для окружений без LangGraph оставлен последовательный резервный путь.
+- RAG по 5 регламентам в формате Markdown из `project_support_lending_msb_clean/Проект поддержки кредитования МСБ/data/documents`.
+- Инструменты SQLite поверх `clients.sqlite` в режиме только для чтения: профиль клиента, заявки, кредиты и сводный клиентский контекст.
+- Тикеты эскалации в `runtime/support_tickets.sqlite`.
+- Логи трассировки с найденными RAG-фрагментами и вызовами инструментов в `runtime/traces`.
+- Демо-интерфейс Streamlit в `app/streamlit_app.py`.
+- Сквозная E2E-оценка по `data/qa/qa.jsonl` с отчётом в `reports/eval_report.md`.
 
-The QA file is used only for evaluation labels and is not indexed into RAG.
+Файл QA используется только как разметка для оценки и не индексируется в RAG.
 
-## Modes
+## Режимы работы
 
-The code supports two modes:
+Код поддерживает два режима:
 
-- Local mode: deterministic TF-IDF RAG and rule-based answer generation. This mode runs without network access and is used by scripts by default.
-- Online mode: uses GigaChat if `langchain-gigachat` is installed and credentials are available in `.env`. The parser accepts both standard names such as `GIGACHAT_CREDENTIALS` and the local `Authorization_key` / `client_id` format. Guardrail-sensitive answers, calculations and client-specific transactional answers remain deterministic even in online mode.
+- Локальный режим: детерминированный TF-IDF RAG и генерация ответа на правилах. Этот режим работает без сетевого доступа и используется скриптами по умолчанию.
+- Онлайн-режим: использует GigaChat, если установлен `langchain-gigachat` и в `.env` есть учётные данные. Парсер понимает стандартные имена переменных, например `GIGACHAT_CREDENTIALS`, а также локальный формат `Authorization_key` / `client_id`. Ответы, связанные с защитными правилами, расчётами и клиентскими транзакционными сценариями, остаются детерминированными даже в онлайн-режиме.
 
-## Install
+## Установка
 
 ```bash
 python3 -m pip install -r requirements.txt
 ```
 
-## Run
+## Запуск
 
 ```bash
 python3 scripts/ingest.py
@@ -36,51 +36,50 @@ python3 scripts/evaluate.py
 streamlit run app/streamlit_app.py
 ```
 
-For online LLM mode in demo:
+Запуск demo в онлайн-режиме с GigaChat:
 
 ```bash
 python3 scripts/demo.py --online
 ```
 
-## Runtime files
+## Файлы выполнения
 
-Generated files are placed under:
+Сгенерированные файлы находятся здесь:
 
-- `runtime/chroma` for the fallback index and optional Chroma collection;
-- `runtime/traces` for request traces;
-- `runtime/support_tickets.sqlite` for escalation tickets;
-- `reports/eval_report.md` for evaluation output.
+- `runtime/chroma` — резервный индекс и опциональная Chroma-коллекция;
+- `runtime/traces` — логи трассировки запросов;
+- `runtime/support_tickets.sqlite` — тикеты эскалации;
+- `reports/eval_report.md` — отчёт оценки.
 
-Source training data is not modified.
+Исходные учебные данные не изменяются.
 
+## Онлайн дымовой тест
 
-## Online smoke test
-
-A safe online check that does not send training documents or client data is available:
+Безопасная онлайн-проверка, которая не отправляет учебные документы и клиентские данные:
 
 ```bash
 .venv/bin/python scripts/online_smoke.py
 ```
 
-Verified on 2026-06-15:
+Проверено 2026-06-15:
 
-- GigaChat credentials are detected.
-- GigaChat chat request returns a response.
-- GigaChat embeddings return 1024-dimensional vectors.
-- Chroma can store and query a synthetic document using GigaChat embeddings.
+- учётные данные GigaChat обнаружены;
+- чат-запрос GigaChat возвращает ответ;
+- эмбеддинги GigaChat возвращают 1024-мерные векторы;
+- Chroma сохраняет и ищет синтетический документ через эмбеддинги GigaChat.
 
-The full `scripts/demo.py --online` path sends retrieved regulation chunks and demo client context to GigaChat for non-sensitive generation paths. Use it only in an environment where that external data transfer is allowed.
+Полный путь `scripts/demo.py --online` отправляет найденные фрагменты регламентов и демо-контекст клиента в GigaChat только для не чувствительных путей генерации. Используйте его только в окружении, где такая внешняя передача данных разрешена.
 
-## Last local verification
+## Последняя проверка
 
-Run on 2026-06-15 in local mode:
+Проверено 2026-06-15:
 
-- `.venv/bin/python scripts/ingest.py`: 5 documents, 289 chunks, required metadata present.
-- `.venv/bin/python -m compileall src scripts app`: all modules compile.
-- `.venv/bin/python scripts/demo.py`: 5 demo scenarios completed; sales and negative cases created tickets.
-- `.venv/bin/python scripts/demo.py --online`: full online demo completed; GigaChat was available, while transactional and guardrail-sensitive answers used deterministic safeguards.
-- `.venv/bin/python scripts/evaluate.py`: 180/180 cases passed with 100.0% outcome, escalation, source hit, tool calls and rejection/offtopic metrics.
-- `.venv/bin/python scripts/online_smoke.py`: online GigaChat chat, embeddings and Chroma smoke passed on synthetic data.
-- Streamlit UI verified with HTTP 200 at `http://localhost:8501`, then the test server was stopped.
+- `.venv/bin/python scripts/ingest.py`: 5 документов, 289 фрагментов, обязательные метаданные заполнены.
+- `.venv/bin/python -m compileall src scripts app`: все модули компилируются.
+- `.venv/bin/python scripts/demo.py`: 5 демо-сценариев выполнены; для продажной и негативной эскалации созданы тикеты.
+- `.venv/bin/python scripts/demo.py --online`: полное онлайн-демо выполнено; GigaChat доступен, а транзакционные ответы и ответы, связанные с защитными правилами, защищены детерминированной логикой.
+- `.venv/bin/python scripts/evaluate.py`: 180 из 180 кейсов пройдены; метрики результата, эскалации, попадания источника, вызовов инструментов, отказов и кейсов вне темы равны 100.0%.
+- `.venv/bin/python scripts/online_smoke.py`: онлайн-проверка чата GigaChat, эмбеддингов и Chroma на синтетических данных пройдена.
+- Интерфейс Streamlit проверен по HTTP 200 на `http://localhost:8501`; тестовый сервер затем остановлен.
 
-Sensitive and generated local files are excluded via `.gitignore` (`.env`, `.venv`, caches, runtime indexes, traces and ticket DB).
+Секреты и локально сгенерированные файлы исключены через `.gitignore` (`.env`, `.venv`, кэши, служебные индексы, трассировки и база тикетов).

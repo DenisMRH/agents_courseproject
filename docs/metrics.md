@@ -1,13 +1,13 @@
-# Evaluation metrics
+# Метрики оценки
 
-The evaluation script uses `data/qa/qa.jsonl` as labels only. The agent never indexes QA examples into RAG.
+Скрипт оценки использует `data/qa/qa.jsonl` только как разметку. Агент не индексирует QA-примеры в RAG.
 
-| Metric | Meaning |
+| Метрика | Смысл |
 |---|---|
-| Outcome accuracy | Predicted `outcome_type` equals `expected_outcome_type` with a small allowance for clarification/rejection boundary cases. |
-| Escalation accuracy | Sales and negative escalation cases create a ticket; non-escalation cases do not. |
-| Source hit rate | At least one retrieved source document matches a referenced document from the QA label. |
-| Tool-call correctness | Transactional and calculation cases with `client_id` call `get_client_context`; purely informational cases are not penalized for no tools. |
-| Rejection/offtopic correctness | Manipulation, no-data and offtopic cases return rejection rather than hallucinated policy or client data. |
+| Точность результата | Предсказанный тип результата совпадает с ожидаемым; для границы «нужно уточнение / отказ» допускается небольшое послабление. |
+| Точность эскалации | Продажные и негативные кейсы создают тикет; неэскалационные кейсы тикет не создают. |
+| Попадание источника | Хотя бы один найденный источник совпадает с документом, указанным в разметке QA. |
+| Корректность вызовов инструментов | Транзакционные кейсы и кейсы расчёта с `client_id` вызывают `get_client_context`; чисто информационные кейсы не штрафуются за отсутствие вызовов инструментов. |
+| Корректность отказов и кейсов вне темы | Манипуляции, кейсы без данных и запросы вне темы возвращают отказ или безопасное ограничение вместо выдуманной политики или клиентских данных. |
 
-Metrics are reported per category and overall in `reports/eval_report.md`.
+Метрики считаются по категориям и в целом в `reports/eval_report.md`.

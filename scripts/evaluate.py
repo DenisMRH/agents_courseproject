@@ -11,7 +11,28 @@ from typing import Any, Dict, Iterable, List
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from src.config import AgentConfig
+from src.display import label_intent, label_outcome
 from src.workflow import SupportAgent
+
+
+CATEGORY_LABELS = {
+    "edge_conflict": "коллизии регламентов",
+    "edge_manipulation": "манипуляции",
+    "edge_no_data": "нет данных / вне нормативки",
+    "escalation_negative": "негативная эскалация",
+    "escalation_sales": "продажная эскалация",
+    "info": "информационные вопросы",
+    "offtopic": "вне темы",
+    "transactional": "клиентские сценарии",
+}
+
+METRIC_LABELS = {
+    "outcome": "результат",
+    "escalation": "эскалация",
+    "source": "источник",
+    "tool": "инструменты",
+    "rejection": "отказ / вне темы",
+}
 
 
 @dataclass
@@ -71,34 +92,36 @@ def rejection_expected(case: Dict[str, Any]) -> bool:
 
 def render_report(buckets: Dict[str, Bucket], total: Bucket) -> str:
     lines = [
-        "# E2E evaluation report",
+        "# Отчёт E2E-оценки",
         "",
-        "Evaluation uses `data/qa/qa.jsonl` only as labels and never as RAG context.",
+        "Оценка использует `data/qa/qa.jsonl` только как разметку. Эти примеры не индексируются в RAG.",
         "",
-        "| Category | N | Outcome | Escalation | Source hit | Tool calls | Rejection/offtopic |",
+        "| Категория | Кол-во | Результат | Эскалация | Попадание источника | Вызовы инструментов | Отказы / вне темы |",
         "|---|---:|---:|---:|---:|---:|---:|",
     ]
 
     def pct(ok: int, n: int) -> str:
-        return f"{(ok / n * 100):.1f}%" if n else "n/a"
+        return f"{(ok / n * 100):.1f}%" if n else "н/д"
 
     for category in sorted(buckets):
         bucket = buckets[category]
+        category_label = CATEGORY_LABELS.get(category, category)
         lines.append(
-            f"| {category} | {bucket.total} | {pct(bucket.outcome_ok, bucket.total)} | "
+            f"| {category_label} | {bucket.total} | {pct(bucket.outcome_ok, bucket.total)} | "
             f"{pct(bucket.escalation_ok, bucket.total)} | {pct(bucket.source_ok, bucket.total)} | "
             f"{pct(bucket.tool_ok, bucket.total)} | {pct(bucket.rejection_ok, bucket.total)} |"
         )
     lines.append(
-        f"| **overall** | {total.total} | {pct(total.outcome_ok, total.total)} | "
+        f"| **итого** | {total.total} | {pct(total.outcome_ok, total.total)} | "
         f"{pct(total.escalation_ok, total.total)} | {pct(total.source_ok, total.total)} | "
         f"{pct(total.tool_ok, total.total)} | {pct(total.rejection_ok, total.total)} |"
     )
-    lines.extend(["", "## Sample failures", ""])
+    lines.extend(["", "## Примеры ошибок", ""])
     failures: List[str] = []
     for category, bucket in sorted(buckets.items()):
-        failures.extend(f"- {category}: {item}" for item in bucket.failures[:3])
-    lines.extend(failures[:25] if failures else ["No sampled failures."])
+        category_label = CATEGORY_LABELS.get(category, category)
+        failures.extend(f"- {category_label}: {item}" for item in bucket.failures[:3])
+    lines.extend(failures[:25] if failures else ["Ошибок в выборке нет."])
     lines.append("")
     return "\n".join(lines)
 
@@ -136,9 +159,10 @@ def main() -> None:
             target.tool_ok += int(metrics["tool"])
             target.rejection_ok += int(metrics["rejection"])
         if not all(metrics.values()) and len(bucket.failures) < 5:
-            failed = ", ".join(name for name, ok in metrics.items() if not ok)
+            failed = ", ".join(METRIC_LABELS.get(name, name) for name, ok in metrics.items() if not ok)
             bucket.failures.append(
-                f"{case['id']} failed {failed}; expected={case['expected_outcome_type']}, got={response.outcome_type}, intent={response.intent}"
+                f"{case['id']}: провалены метрики {failed}; ожидалось={label_outcome(case['expected_outcome_type'])}, "
+                f"получено={label_outcome(response.outcome_type)}, интент={label_intent(response.intent)}"
             )
 
     config.reports_dir.mkdir(parents=True, exist_ok=True)
@@ -146,7 +170,7 @@ def main() -> None:
     report_path = config.reports_dir / "eval_report.md"
     report_path.write_text(report, encoding="utf-8")
     print(report)
-    print(f"Report written to {report_path}")
+    print(f"Отчёт записан в {report_path}")
 
 
 if __name__ == "__main__":

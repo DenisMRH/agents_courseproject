@@ -1,1 +1,1 @@
-"""Support agent for the MSB lending training project."""
+"""Агент поддержки для учебного проекта по кредитованию МСБ."""
